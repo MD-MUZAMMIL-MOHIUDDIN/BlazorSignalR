@@ -1,0 +1,96 @@
+﻿@page "/groupmembers/create"
+@inject Blazorwebserverapp.Data.ApplicationDbContext DB
+@using Blazorwebserverapp.Data
+@using Blazorwebserverapp.Models
+@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Identity;
+@using Microsoft.EntityFrameworkCore
+@inject UserManager<ApplicationUser> _userManager
+@inject ApplicationDbContext _context
+
+<PageTitle>Create</PageTitle>
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="GroupMember" OnValidSubmit="AddGroupMember" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+           @*  <div class="mb-3">
+                <label for="groupid" class="form-label">GroupId:</label> 
+                <InputText id="groupid" @bind-Value="GroupMember.GroupId" class="form-control" /> 
+                <ValidationMessage For="() => GroupMember.GroupId" class="text-danger" /> 
+            </div> *@      
+            <div class="mb-3">
+                <h3 for="groupid" class="form-label">@GroupName</h3>
+            </div>
+            <div class="mb-3">
+                
+                <InputSelect @bind-Value="GroupMember.UserId">
+                    @foreach (var item in Users)
+                    {
+                        <option value="@item.Id">@item.UserName</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => GroupMember.UserId" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Add Member</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/groupmembers">Back to List</a>
+</div>
+
+<ul>
+    @foreach (var name in GroupMemberList)
+    {
+        <li>@name</li>
+    }
+    
+</ul>
+
+@code {
+
+    [SupplyParameterFromForm]
+    public GroupMember GroupMember { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    public string GroupId { get; set; }
+    public string GroupName { get; set; }
+    List<string> GroupMemberList;
+
+
+    List<ApplicationUser> Users;
+
+    protected override void OnParametersSet()
+    {
+        GroupMember.GroupId = GroupId;
+        GroupName = _context.Group.First(x => x.GroupId == GroupId).GroupName;
+        setUserList();
+        base.OnParametersSet();
+
+    }
+    void setUserList()
+    {
+        GroupMemberList = _context.GroupMember.Where(x => x.GroupId == GroupId)
+                                    .Include(x => x.ApplicationUser)
+                                    .Select(x => x.ApplicationUser.UserName)
+                                    .ToList();
+    }
+    protected override void OnInitialized()
+    {
+        Users = _userManager.Users.ToList();
+        base.OnInitialized();
+    }
+
+    
+
+    // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
+    public async Task AddGroupMember()
+    {
+        DB.GroupMember.Add(GroupMember);
+        await DB.SaveChangesAsync();
+        setUserList();
+       // NavigationManager.NavigateTo("/groupmembers");
+    }
+}

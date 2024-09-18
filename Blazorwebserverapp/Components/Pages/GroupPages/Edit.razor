@@ -1,0 +1,111 @@
+﻿@page "/Groups/edit"
+@inject Blazorwebserverapp.Data.ApplicationDbContext DB
+@using Blazorwebserverapp.Models
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h4>Group</h4>
+<hr />
+@if (Group is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Group" OnValidSubmit="UpdateGroup" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <input type="hidden" name="Group.GroupId" value="@Group.GroupId" />
+                <div class="mb-3">
+                    <label for="groupname" class="form-label">GroupName:</label>
+                    <InputText id="groupname" @bind-Value="Group.GroupName" class="form-control" />
+                    <ValidationMessage For="() => Group.GroupName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="createdat" class="form-label">CreatedAt:</label>
+                    <InputDate id="createdat" @bind-Value="Group.CreatedAt" class="form-control" />
+                    <ValidationMessage For="() => Group.CreatedAt" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="deletedat" class="form-label">DeletedAt:</label>
+                    <InputDate id="deletedat" @bind-Value="Group.DeletedAt" class="form-control" />
+                    <ValidationMessage For="() => Group.DeletedAt" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="groupdescription" class="form-label">GroupDescription:</label>
+                    <InputText id="groupdescription" @bind-Value="Group.GroupDescription" class="form-control" />
+                    <ValidationMessage For="() => Group.GroupDescription" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="groupicon" class="form-label">GroupIcon:</label>
+                    <InputText id="groupicon" @bind-Value="Group.GroupIcon" class="form-control" />
+                    <ValidationMessage For="() => Group.GroupIcon" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="isdeleted" class="form-label">IsDeleted:</label>
+                    <InputCheckbox id="isdeleted" @bind-Value="Group.IsDeleted" class="form-check-input" />
+                    <ValidationMessage For="() => Group.IsDeleted" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/groups">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string GroupId { get; set; }
+
+    [SupplyParameterFromForm]
+    public Group? Group { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Group ??= await DB.Group.FirstOrDefaultAsync(m => m.GroupId == GroupId);
+
+        if (Group is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more details, see https://aka.ms/RazorPagesCRUD.
+    public async Task UpdateGroup()
+    {
+        DB.Attach(Group!).State = EntityState.Modified;
+
+        try
+        {
+            await DB.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!GroupExists(Group!.GroupId))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/groups");
+    }
+
+    bool GroupExists(string groupid)
+    {
+        return DB.Group.Any(e => e.GroupId == groupid);
+    }
+}

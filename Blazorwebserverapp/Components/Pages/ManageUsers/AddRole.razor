@@ -1,0 +1,45 @@
+﻿@using Blazorwebserverapp.Data;
+@using Microsoft.AspNetCore.Identity;
+@inject ApplicationDbContext _context
+@inject RoleManager<IdentityRole> _RoleManager
+@rendermode InteractiveServer
+@inject NavigationManager _nm
+
+<h3>AddRole</h3>
+<h1>@Error</h1>
+<div class="input-group mb-3">
+    <input type="text" class="form-control" @bind=@RoleName placeholder="RoleName" aria-label="RoleName" aria-describedby="basic-addon1">
+</div>
+<div class="input-group mb-3">
+    <button class="btn btn-primary" @onclick=@addRole>Add</button>
+</div>
+
+@code {
+    IdentityRole identityRole = new IdentityRole();
+    //TODO: pull this from roles
+    IQueryable<IdentityRole> Roles { get; set; }
+    List<IdentityRole> listRoles { get; set; }
+    public string RoleName { get; set; }
+    public string Error { get; set; }
+
+    public void addRole()
+    {
+        string name = RoleName;
+        if (_RoleManager.FindByNameAsync(name).Result == null)
+        {
+            identityRole.Name = name;
+            identityRole.Id = Guid.NewGuid().ToString();
+            identityRole.ConcurrencyStamp = DateTime.UtcNow.ToString();
+            identityRole.NormalizedName = name.ToUpper();
+            _context.Add(identityRole);
+            _context.SaveChanges();
+            _nm.NavigateTo(_nm.Uri, true);
+        }
+        else
+        {
+            Error = $"{name} role already Exists";
+            
+        }
+    }
+
+}

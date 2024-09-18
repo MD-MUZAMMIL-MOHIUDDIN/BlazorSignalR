@@ -1,0 +1,61 @@
+﻿@page "/conversations/details"
+@inject Blazorwebserverapp.Data.ApplicationDbContext DB
+@using Blazorwebserverapp.Models
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h4>Conversation</h4>
+    <hr />
+    @if (conversation is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">FromId</dt>
+            <dd class="col-sm-10">@conversation.FromId</dd>
+            <dt class="col-sm-2">SendToId</dt>
+            <dd class="col-sm-10">@conversation.SendToId</dd>
+            <dt class="col-sm-2">Message</dt>
+            <dd class="col-sm-10">@conversation.Message</dd>
+            <dt class="col-sm-2">RecievedDate</dt>
+            <dd class="col-sm-10">@conversation.RecievedDate</dd>
+            <dt class="col-sm-2">SeenDate</dt>
+            <dd class="col-sm-10">@conversation.SeenDate</dd>
+            <dt class="col-sm-2">SendDate</dt>
+            <dd class="col-sm-10">@conversation.SendDate</dd>
+            <dt class="col-sm-2">IsBlocked</dt>
+            <dd class="col-sm-10">@conversation.IsBlocked</dd>
+            <dt class="col-sm-2">BlockedBy</dt>
+            <dd class="col-sm-10">@conversation.BlockedBy</dd>
+            <dt class="col-sm-2">IsDeleted</dt>
+            <dd class="col-sm-10">@conversation.IsDeleted</dd>
+        </dl>
+        <div>
+            <a href="@($"/conversations/edit?id={conversation.Id}")">Edit</a> |
+            <a href="@($"/conversations")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    Conversation? conversation;
+
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        conversation = await DB.Conversation.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (conversation is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

@@ -1,0 +1,35 @@
+﻿@page "/listRoles"
+@using Blazorwebserverapp.Data;
+@using Microsoft.AspNetCore.Identity;
+@inject ApplicationDbContext _context
+
+@inject RoleManager<IdentityRole> _RoleManager
+
+
+
+
+    <AddRole/>
+<h3>Roles</h3>
+<ul>
+    @if (Roles is not null)
+    {
+        @foreach (var item in Roles)
+    {
+        <li>@item.Name</li>
+    }
+    }
+</ul>
+
+
+@code {
+  
+   
+    List<IdentityRole> Roles { get; set; }
+    protected override Task OnInitializedAsync()
+    {
+        // We have a list of roles
+        Roles = _RoleManager.Roles.ToList();      
+
+        return base.OnInitializedAsync();
+    }
+}

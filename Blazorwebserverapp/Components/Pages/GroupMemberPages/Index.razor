@@ -1,0 +1,18 @@
+﻿@page "/groupmembers"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject Blazorwebserverapp.Data.ApplicationDbContext DB
+@using Blazorwebserverapp.Models
+
+<PageTitle>Index</PageTitle>
+
+
+<QuickGrid Class="table" Items="DB.GroupMember">
+    <PropertyColumn Property="groupmember => groupmember.GroupId" />
+    <PropertyColumn Property="groupmember => groupmember.UserId" />
+
+    <TemplateColumn Context="groupmember">
+        <a href="@($"groupmembers/edit?id={groupmember.Id}")">Edit</a> |
+        <a href="@($"groupmembers/details?id={groupmember.Id}")">Details</a> |
+        <a href="@($"groupmembers/delete?id={groupmember.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>

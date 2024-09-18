@@ -1,0 +1,68 @@
+﻿@page "/manageroles/{userId}"
+@using Blazorwebserverapp.ViewModels;
+@using Microsoft.AspNetCore.Identity;
+@inject RoleManager<IdentityRole> roleManager
+@inject UserManager<Data.ApplicationUser> userManager
+@rendermode InteractiveServer
+
+<h3>UserRoles</h3>
+                       
+@if (roleViewModels is not null)
+    {
+        @foreach (var role in roleViewModels)
+        {
+            <div class="form-check m-1">
+                <InputCheckbox id="@role.Id" @bind-Value="role.IsSelected" class="form-check-input" />
+                <label for="@role.RoleName" class="form-check-label">
+                    @role.RoleName
+                </label>
+            </div>
+        }
+    }
+
+    <button class="btn btn-primary" @onclick="@Update">Update Roles</button>
+
+@code {
+    [Parameter]
+    public string userId { get; set; }
+    private List<RoleViewModel> roleViewModels = new List<RoleViewModel>();
+    List<RoleViewModel> updatedRoles = new List<RoleViewModel>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        foreach (var r in roleManager.Roles.ToList())
+        {
+            var role = new RoleViewModel
+                {
+                    Id = r.Id,
+                    RoleName = r.Name,
+                };
+
+            if (await userManager.IsInRoleAsync(user, r.Name))
+            {
+                role.IsSelected = true;
+            }
+            else
+            {
+                role.IsSelected = false;
+            }
+            roleViewModels.Add(role);
+
+        }
+
+    }
+
+    public async Task Update()
+    {
+        var user = await userManager.FindByIdAsync(userId);
+
+        var roles = await userManager.GetRolesAsync(user);
+        var result = await userManager.RemoveFromRolesAsync(user, roles);
+
+        result = await userManager.AddToRolesAsync(user, roleViewModels.Where(x => x.IsSelected).Select(r => r.RoleName));
+
+        StateHasChanged();
+    }
+
+}

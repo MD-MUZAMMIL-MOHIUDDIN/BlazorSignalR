@@ -1,0 +1,74 @@
+﻿@using Blazorwebserverapp.ViewModels;
+@using Microsoft.AspNetCore.Identity;
+@inject RoleManager<IdentityRole> roleManager
+@inject UserManager<Data.ApplicationUser> userManager
+                                        
+
+<h3>AssignRoles</h3>
+<input type="text  placeholder="Search.." />
+<div class="row">
+
+    @foreach (var user in userList)
+    {
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-body">
+                    @user.Username
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                       <NavLink href="@($"/manageroles/{user.Id}")">Roles</NavLink>
+
+                        <a onclick="return confirm('are you sure ?')" asp-action="DeleteUser" asp-controller="Administrator" asp-route-userId="@user.Id">Delete</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+
+
+@code {
+    // List<UserViewModel> userViewModels;
+    List<UserViewModel> userList = new List<UserViewModel>();
+    List<UserViewModel> userViewModels = new List<UserViewModel>();
+
+    public string userName { get; set; } = string.Empty;
+
+
+    //protected override void OnAfterRender(bool firstRender)
+    //{
+    //    if (!string.IsNullOrEmpty(userName))
+    //    {
+    //        userList = userViewModels.Where(x => x.Username.Contains(userName)).ToList();
+    //    }
+    //    base.OnAfterRender(firstRender);
+
+    //}
+    protected override async Task OnInitializedAsync()
+    {
+        var users = userManager.Users.ToList();
+        foreach (var u in users)
+        {
+            var user = new UserViewModel
+                {
+                    Id = u.Id,
+                    Username = u.UserName,
+                    Email = u.Email,
+                };
+            userViewModels.Add(user);
+        }
+        userList = userViewModels;
+    }
+
+    public void Search(ChangeEventArgs e)
+    {
+        userName = e.Value.ToString();
+        if (!string.IsNullOrEmpty(userName))
+        {
+            userList = userViewModels.Where(x => x.Username.Contains(userName)).ToList();
+        }
+    }
+}
+

@@ -1,0 +1,80 @@
+﻿@page "/list/conversation"
+@using Blazorwebserverapp.Data
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity;
+@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+@inject UserManager<ApplicationUser> _userManager
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+@inject ApplicationDbContext _context
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+
+@if (Users is not null)
+{
+    @foreach (var item in chatListViewModels)
+    {
+        <div class="card">
+            <div class="card-body" @onclick="()=>UserMessages(item.ChatViewId)">
+                @item.ChatViewName
+            </div>
+        </div>
+    }
+}
+
+@code {
+    List<ApplicationUser> Users;
+    ApplicationUser LoggedUserDetails;
+    private ClaimsPrincipal user;
+    class ChatListViewModel
+    {
+        public string ChatViewId { get; set; }
+        public string ChatViewName { get; set; }
+    }
+    List<ChatListViewModel> chatListViewModels = new List<ChatListViewModel>();
+    protected override async Task OnInitializedAsync()
+    {
+        // We have a list of roles
+        Users = _userManager.Users.ToList();
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+        LoggedUserDetails = _userManager.Users.First(x => x.Email == user.Identity.Name);
+        var currentUsersIdList = _context.Conversation
+                                .Where(x => x.FromId == LoggedUserDetails.Id)
+                                .Select(x => x.SendToId).Distinct().ToList();
+
+        var currentUserGroups = _context.GroupMember
+         .Where(x => x.UserId == LoggedUserDetails.Id)
+         .Include(x => x.Group)
+         .GroupBy(x => x.UserId)  // Group by UserId
+         .Select(g => g.First())  // Select the first element of each group
+         .ToList();
+
+        chatListViewModels = currentUserGroups.Select(
+                                    x => new ChatListViewModel
+                                    {
+                                                ChatViewId = x.GroupId,
+                                                ChatViewName = x.Group.GroupName
+                                    }
+                                ).ToList();
+
+        List<ChatListViewModel> currentUsersList = currentUsersIdList.Select(x =>
+         new ChatListViewModel
+            {
+                ChatViewId = x,
+                ChatViewName = Users.First(y => y.Id == x).UserName
+            }
+         ).ToList();
+
+        chatListViewModels.AddRange(currentUsersList);
+
+
+    }
+
+    void UserMessages(string Id)
+    {
+        NavigationManager.NavigateTo($"/list/conversation/{Id}");
+    }
+
+}

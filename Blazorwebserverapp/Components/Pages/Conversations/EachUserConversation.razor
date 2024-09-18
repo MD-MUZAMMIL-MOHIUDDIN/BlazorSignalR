@@ -1,0 +1,205 @@
+﻿
+@using Blazorwebserverapp.Data
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity;
+@using System.Security.Claims
+@inject UserManager<ApplicationUser> _userManager
+@inject NavigationManager NavigationManager
+@inject ApplicationDbContext _context
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+
+<div class="col-md-9">
+
+    <div class="card card-primary card-outline direct-chat direct-chat-primary">
+        <div class="card-header">
+            <h3 class="card-title">Direct Chat</h3>
+            <div class="card-tools">
+                <span title="3 New Messages" class="badge bg-primary">3</span>
+                <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button type="button" class="btn btn-tool" title="Contacts" data-widget="chat-pane-toggle">
+                    <i class="fas fa-comments"></i>
+                </button>
+                <button type="button" class="btn btn-tool" data-card-widget="remove">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body">
+
+
+            <div class="direct-chat-messages">
+                @foreach (var conversation in conversations)
+                {
+                    bool isLoggedInUser = conversation.FromId == LoggedUserDetails.Id;
+                    <div class="@( isLoggedInUser?"direct-chat-msg":"direct-chat-msg right")">
+                        <div class="direct-chat-infos clearfix">
+                            @{
+                                string UserName = _context.Users.FirstOrDefault(x => x.Id == conversation.FromId).UserName;
+                            }
+                            <span class="direct-chat-name @(isLoggedInUser?"float-left":"float-right") ">@UserName</span>
+                            <span class="direct-chat-timestamp @(isLoggedInUser?"float-right":"float-left")">
+                                <span>@conversation.SendDate.ToString("dd-MMM-yyyy")</span>
+                                <span>@conversation.SendDate.ToString("hh:mm")</span>
+                            </span>
+                        </div>
+
+                        <img class="direct-chat-img" src="AdminLTE/dist/img/user1-128x128.jpg" alt="Message User Image">
+
+                        <div class="direct-chat-text">
+                            @conversation.Message
+                        </div>
+
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card-footer">
+
+            <EditForm method="post" Model="Conversation" OnValidSubmit="Send" FormName="create" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger" />
+
+                <div class="input-group">                    
+                    <InputText id="message" @bind-Value="Conversation.Message" placeholder="Type Message ..." class="form-control" />
+                    <ValidationMessage For="() => Conversation.Message" class="text-danger" />
+                    <span class="input-group-append">
+                        <button type="submit" class="btn btn-primary">Send</button>
+                    </span>
+                    </div>
+
+                
+            </EditForm>
+
+       @*      <EditForm method="post" Model="model" OnValidSubmit="Send" FormName="create" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger" />
+
+                <div class="input-group">
+                    <InputText id="message" @bind-Value="model.Message" placeholder="Type Message ..." class="form-control" />
+                    <ValidationMessage For="() => model.Message" class="text-danger" />
+                    <span class="input-group-append">
+                        <button type="submit" class="btn btn-primary">Send</button>
+                    </span>
+                </div>
+            </EditForm>
+        *@ </div>
+
+    </div>
+
+</div>
+
+
+
+@* @if(UserDetails is not null)
+{
+    <h3>@UserDetails.UserName</h3>
+    @foreach(var conversation in conversations)
+    {
+        <div>
+            <div class="alert @(conversation.FromId == LoggedUserDetails.Id ? "alert-primary":"alert-secondary")" role="alert">
+                @conversation.Message
+            </div>
+            <span>@conversation.SendDate.ToString("dd-MMM-yyyy")</span>
+            <span>@conversation.SendDate.ToString("hh:mm")</span>
+            
+        </div>
+    }
+    <h4>Conversation</h4>
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Conversation" OnValidSubmit="Send" FormName="create" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger" />
+               
+                <div class="mb-3">
+                    <label for="message" class="form-label">Message:</label>
+                    <InputText id="message" @bind-Value="Conversation.Message" class="form-control" />
+                    <ValidationMessage For="() => Conversation.Message" class="text-danger" />
+                </div>
+               
+                <button type="submit" class="btn btn-primary">Create</button>
+            </EditForm>
+        </div>
+    </div>
+
+        
+}
+
+ *@
+@code {
+    [Parameter]
+    public string UserId { get; set; }
+    [SupplyParameterFromForm]
+    public Models.Conversation Conversation { get; set; } = new();
+
+    private ClaimsPrincipal user;
+    ApplicationUser UserDetails;
+    ApplicationUser LoggedUserDetails;
+    Models.Conversation model;
+    List<Models.Conversation> conversations = new List<Models.Conversation>();
+    protected override async Task OnInitializedAsync()
+    {
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+        LoggedUserDetails = _userManager.Users.First(x => x.Email == user.Identity.Name);
+        UserDetails = _userManager.Users.First(x => x.Id == UserId);
+
+        SyncData();
+        UpdateReceivedDate();
+        // base.OnInitialized();
+    }
+
+    // void Delete()
+    // {
+    //     conversations = _context.Conversation.ToList();
+    //     _context.RemoveRange(conversations);
+    //     _context.SaveChanges();
+    // }
+    void SyncData()
+    {
+        Conversation = new Models.Conversation();
+
+        var LoggedUserSent = _context.Conversation.Where(x => x.SendToId == UserId)
+                                       .Where(x => x.FromId == LoggedUserDetails.Id)
+                  .ToList();
+        var LoggedUserRecieved = _context.Conversation.Where(x => x.SendToId == LoggedUserDetails.Id)
+                            .Where(x => x.FromId == UserId)
+       .ToList();
+        conversations.Clear();
+        conversations.AddRange(LoggedUserSent);
+        conversations.AddRange(LoggedUserRecieved);
+        conversations = conversations.OrderBy(x => x.SendDate).ToList();
+
+    }
+    void Send()
+    {
+        Conversation.SendToId = UserId;
+        Conversation.SendDate = DateTime.Now;
+        Conversation.FromId = LoggedUserDetails.Id;
+        Conversation.BlockedBy = string.Empty;
+        _context.Conversation.Add(Conversation);
+
+        _context.SaveChanges();
+        SyncData();
+    }
+    void UpdateReceivedDate()
+    {
+        var updateConversation = conversations.Where(x => x.RecievedDate == default(DateTime));
+        foreach(var item in updateConversation)
+        {
+            item.RecievedDate = DateTime.Now;
+            _context.Update(item);
+            _context.SaveChanges();
+        }
+    }
+
+}

@@ -1,0 +1,126 @@
+﻿@page "/Conversations/edit"
+@inject Blazorwebserverapp.Data.ApplicationDbContext DB
+@using Blazorwebserverapp.Models
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h4>Conversation</h4>
+<hr />
+@if (Conversation is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Conversation" OnValidSubmit="UpdateConversation" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <input type="hidden" name="Conversation.Id" value="@Conversation.Id" />
+                <div class="mb-3">
+                    <label for="fromid" class="form-label">FromId:</label>
+                    <InputText id="fromid" @bind-Value="Conversation.FromId" class="form-control" />
+                    <ValidationMessage For="() => Conversation.FromId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="sendtoid" class="form-label">SendToId:</label>
+                    <InputText id="sendtoid" @bind-Value="Conversation.SendToId" class="form-control" />
+                    <ValidationMessage For="() => Conversation.SendToId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="message" class="form-label">Message:</label>
+                    <InputText id="message" @bind-Value="Conversation.Message" class="form-control" />
+                    <ValidationMessage For="() => Conversation.Message" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="recieveddate" class="form-label">RecievedDate:</label>
+                    <InputDate id="recieveddate" @bind-Value="Conversation.RecievedDate" class="form-control" />
+                    <ValidationMessage For="() => Conversation.RecievedDate" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="seendate" class="form-label">SeenDate:</label>
+                    <InputDate id="seendate" @bind-Value="Conversation.SeenDate" class="form-control" />
+                    <ValidationMessage For="() => Conversation.SeenDate" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="senddate" class="form-label">SendDate:</label>
+                    <InputDate id="senddate" @bind-Value="Conversation.SendDate" class="form-control" />
+                    <ValidationMessage For="() => Conversation.SendDate" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="isblocked" class="form-label">IsBlocked:</label>
+                    <InputCheckbox id="isblocked" @bind-Value="Conversation.IsBlocked" class="form-check-input" />
+                    <ValidationMessage For="() => Conversation.IsBlocked" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="blockedby" class="form-label">BlockedBy:</label>
+                    <InputText id="blockedby" @bind-Value="Conversation.BlockedBy" class="form-control" />
+                    <ValidationMessage For="() => Conversation.BlockedBy" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="isdeleted" class="form-label">IsDeleted:</label>
+                    <InputCheckbox id="isdeleted" @bind-Value="Conversation.IsDeleted" class="form-check-input" />
+                    <ValidationMessage For="() => Conversation.IsDeleted" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/conversations">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    public Conversation? Conversation { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Conversation ??= await DB.Conversation.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Conversation is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more details, see https://aka.ms/RazorPagesCRUD.
+    public async Task UpdateConversation()
+    {
+        DB.Attach(Conversation!).State = EntityState.Modified;
+
+        try
+        {
+            await DB.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!ConversationExists(Conversation!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/conversations");
+    }
+
+    bool ConversationExists(int id)
+    {
+        return DB.Conversation.Any(e => e.Id == id);
+    }
+}

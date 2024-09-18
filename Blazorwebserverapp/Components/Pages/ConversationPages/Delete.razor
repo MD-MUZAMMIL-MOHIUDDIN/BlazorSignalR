@@ -1,0 +1,85 @@
+﻿@page "/conversations/delete"
+@inject Blazorwebserverapp.Data.ApplicationDbContext DB
+@using Blazorwebserverapp.Models
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Delete</h1>
+
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>Conversation</h4>
+    <hr />
+    @if (conversation is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">FromId</dt>
+            <dd class="col-sm-10">@conversation.FromId</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">SendToId</dt>
+            <dd class="col-sm-10">@conversation.SendToId</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Message</dt>
+            <dd class="col-sm-10">@conversation.Message</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">RecievedDate</dt>
+            <dd class="col-sm-10">@conversation.RecievedDate</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">SeenDate</dt>
+            <dd class="col-sm-10">@conversation.SeenDate</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">SendDate</dt>
+            <dd class="col-sm-10">@conversation.SendDate</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">IsBlocked</dt>
+            <dd class="col-sm-10">@conversation.IsBlocked</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">BlockedBy</dt>
+            <dd class="col-sm-10">@conversation.BlockedBy</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">IsDeleted</dt>
+            <dd class="col-sm-10">@conversation.IsDeleted</dd>
+        </dl>
+        <EditForm method="post" Model="conversation" OnValidSubmit="DeleteConversation" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(conversation is null)">Delete</button> |
+            <a href="/conversations">Back to List</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    Conversation? conversation;
+
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        conversation = await DB.Conversation.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (conversation is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    public async Task DeleteConversation()
+    {
+        DB.Conversation.Remove(conversation!);
+        await DB.SaveChangesAsync();
+        NavigationManager.NavigateTo("/conversations");
+    }
+}

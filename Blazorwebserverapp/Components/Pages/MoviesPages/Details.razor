@@ -1,0 +1,51 @@
+﻿@page "/movies/details"
+@inject Blazorwebserverapp.Data.ApplicationDbContext DB
+@using Blazorwebserverapp
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h4>Movies</h4>
+    <hr />
+    @if (movies is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@movies.Title</dd>
+            <dt class="col-sm-2">ReleaseDate</dt>
+            <dd class="col-sm-10">@movies.ReleaseDate</dd>
+            <dt class="col-sm-2">Genre</dt>
+            <dd class="col-sm-10">@movies.Genre</dd>
+            <dt class="col-sm-2">Price</dt>
+            <dd class="col-sm-10">@movies.Price</dd>
+        </dl>
+        <div>
+            <a href="@($"/movies/edit?id={movies.Id}")">Edit</a> |
+            <a href="@($"/movies")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    Movies? movies;
+
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        movies = await DB.Movies.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (movies is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

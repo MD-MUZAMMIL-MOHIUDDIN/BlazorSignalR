@@ -1,0 +1,91 @@
+﻿@page "/GroupMembers/edit"
+@inject Blazorwebserverapp.Data.ApplicationDbContext DB
+@using Blazorwebserverapp.Models
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h4>GroupMember</h4>
+<hr />
+@if (GroupMember is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="GroupMember" OnValidSubmit="UpdateGroupMember" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <input type="hidden" name="GroupMember.Id" value="@GroupMember.Id" />
+                <div class="mb-3">
+                    <label for="groupid" class="form-label">GroupId:</label>
+                    <InputText id="groupid" @bind-Value="GroupMember.GroupId" class="form-control" />
+                    <ValidationMessage For="() => GroupMember.GroupId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="userid" class="form-label">UserId:</label>
+                    <InputText id="userid" @bind-Value="GroupMember.UserId" class="form-control" />
+                    <ValidationMessage For="() => GroupMember.UserId" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/groupmembers">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    public GroupMember? GroupMember { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        GroupMember ??= await DB.GroupMember.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (GroupMember is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more details, see https://aka.ms/RazorPagesCRUD.
+    public async Task UpdateGroupMember()
+    {
+        DB.Attach(GroupMember!).State = EntityState.Modified;
+
+        try
+        {
+            await DB.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!GroupMemberExists(GroupMember!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/groupmembers");
+    }
+
+    bool GroupMemberExists(int id)
+    {
+        return DB.GroupMember.Any(e => e.Id == id);
+    }
+}

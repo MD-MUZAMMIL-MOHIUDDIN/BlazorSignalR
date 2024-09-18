@@ -1,0 +1,30 @@
+﻿@page "/conversations"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject Blazorwebserverapp.Data.ApplicationDbContext DB
+@using Blazorwebserverapp.Models
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="conversations/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="DB.Conversation">
+    <PropertyColumn Property="conversation => conversation.FromId" />
+    <PropertyColumn Property="conversation => conversation.SendToId" />
+    <PropertyColumn Property="conversation => conversation.Message" />
+    <PropertyColumn Property="conversation => conversation.RecievedDate" />
+    <PropertyColumn Property="conversation => conversation.SeenDate" />
+    <PropertyColumn Property="conversation => conversation.SendDate" />
+    <PropertyColumn Property="conversation => conversation.IsBlocked" />
+    <PropertyColumn Property="conversation => conversation.BlockedBy" />
+    <PropertyColumn Property="conversation => conversation.IsDeleted" />
+
+    <TemplateColumn Context="conversation">
+        <a href="@($"conversations/edit?id={conversation.Id}")">Edit</a> |
+        <a href="@($"conversations/details?id={conversation.Id}")">Details</a> |
+        <a href="@($"conversations/delete?id={conversation.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>

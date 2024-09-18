@@ -1,0 +1,44 @@
+﻿@page "/list/conversation/{UserId}"
+@using Blazorwebserverapp.Data
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity;
+@using System.Security.Claims
+@inject UserManager<ApplicationUser> _userManager
+@inject NavigationManager NavigationManager
+@inject ApplicationDbContext _context
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@if (IsGroup)
+{
+    <GroupConversation GroupId="@UserId" LoggedInUserId="@LoggedUserDetails.Id" />
+}
+else
+{
+    <EachUserConversation UserId="@UserId"/>
+}
+
+@code {
+    [Parameter]
+    public string UserId { get; set; }
+  
+    private ClaimsPrincipal user;
+    ApplicationUser UserDetails;
+    ApplicationUser LoggedUserDetails;
+    bool IsGroup;
+    protected override async Task OnInitializedAsync()
+    {
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+        LoggedUserDetails = _userManager.Users.First(x => x.Email == user.Identity.Name);
+        UserDetails = _userManager.Users.FirstOrDefault(x => x.Id == UserId);
+        if(UserDetails is null)
+        {
+            IsGroup = true;
+        }
+
+    }
+  
+}

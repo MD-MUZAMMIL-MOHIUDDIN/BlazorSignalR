@@ -1,0 +1,28 @@
+﻿@page "/listusers"
+@using Blazorwebserverapp.Data
+@using Microsoft.AspNetCore.Identity;
+@inject UserManager<ApplicationUser> _userManager
+
+<h3>ListUsers</h3>
+<AssignRoles/>
+<ul>
+    @if (Users is not null)
+    {
+        @foreach (var item in Users)
+        {
+                <li>@item.UserName</li>
+        }
+    }
+</ul>
+
+@code {
+    List<ApplicationUser> Users;
+    protected override Task OnInitializedAsync()
+    {
+        // We have a list of roles
+        Users = _userManager.Users.ToList();
+
+        return base.OnInitializedAsync();
+    }
+
+}

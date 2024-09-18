@@ -1,0 +1,47 @@
+﻿@page "/groupmembers/details"
+@inject Blazorwebserverapp.Data.ApplicationDbContext DB
+@using Blazorwebserverapp.Models
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h4>GroupMember</h4>
+    <hr />
+    @if (groupmember is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">GroupId</dt>
+            <dd class="col-sm-10">@groupmember.GroupId</dd>
+            <dt class="col-sm-2">UserId</dt>
+            <dd class="col-sm-10">@groupmember.UserId</dd>
+        </dl>
+        <div>
+            <a href="@($"/groupmembers/edit?id={groupmember.Id}")">Edit</a> |
+            <a href="@($"/groupmembers")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    GroupMember? groupmember;
+
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        groupmember = await DB.GroupMember.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (groupmember is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

@@ -1,0 +1,71 @@
+﻿@page "/groups/create"
+@inject Blazorwebserverapp.Data.ApplicationDbContext DB
+@using Blazorwebserverapp.Models
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h4>Group</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Group" OnValidSubmit="AddGroup" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="mb-3">
+                <label for="groupname" class="form-label">GroupName:</label> 
+                <InputText id="groupname" @bind-Value="Group.GroupName" class="form-control" /> 
+                <ValidationMessage For="() => Group.GroupName" class="text-danger" /> 
+            </div>        
+            @* <div class="mb-3">
+                <label for="createdat" class="form-label">CreatedAt:</label> 
+                <InputDate id="createdat" @bind-Value="Group.CreatedAt" class="form-control" /> 
+                <ValidationMessage For="() => Group.CreatedAt" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="deletedat" class="form-label">DeletedAt:</label> 
+                <InputDate id="deletedat" @bind-Value="Group.DeletedAt" class="form-control" /> 
+                <ValidationMessage For="() => Group.DeletedAt" class="text-danger" /> 
+            </div>   *@      
+            <div class="mb-3">
+                <label for="groupdescription" class="form-label">GroupDescription:</label> 
+                <InputText id="groupdescription" @bind-Value="Group.GroupDescription" class="form-control" /> 
+                <ValidationMessage For="() => Group.GroupDescription" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="groupicon" class="form-label">GroupIcon:</label> 
+                <InputText id="groupicon" @bind-Value="Group.GroupIcon" class="form-control" /> 
+                <ValidationMessage For="() => Group.GroupIcon" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="isdeleted" class="form-label">IsDeleted:</label> 
+                <InputCheckbox id="isdeleted" @bind-Value="Group.IsDeleted" class="form-check-input" /> 
+                <ValidationMessage For="() => Group.IsDeleted" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/groups">Back to List</a>
+</div>
+
+@code {
+
+    [SupplyParameterFromForm]
+    public Group Group { get; set; } = new();
+
+
+    // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
+    public async Task AddGroup()
+    {
+        Group.GroupId = Guid.NewGuid().ToString();
+        Group.CreatedAt = DateTime.Now ;
+        DB.Group.Add(Group);
+        await DB.SaveChangesAsync();
+        NavigationManager.NavigateTo("/groups");
+    }
+}

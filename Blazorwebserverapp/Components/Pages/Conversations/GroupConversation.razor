@@ -1,0 +1,181 @@
+﻿@using Blazorwebserverapp.Data
+@using Blazorwebserverapp.Models
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity;
+@using System.Security.Claims
+@inject UserManager<ApplicationUser> _userManager
+@inject NavigationManager NavigationManager
+@inject ApplicationDbContext _context
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<h3>@GroupName</h3>
+
+
+    <div class="col-md-9">
+
+        <div class="card card-primary card-outline direct-chat direct-chat-primary">
+            <div class="card-header">
+                <h3 class="card-title">Direct Chat</h3>
+                <div class="card-tools">
+                    <span title="3 New Messages" class="badge bg-primary">3</span>
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button type="button" class="btn btn-tool" title="Contacts" data-widget="chat-pane-toggle">
+                        <i class="fas fa-comments"></i>
+                    </button>
+                    <button type="button" class="btn btn-tool" data-card-widget="remove">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-body">
+
+
+                <div class="direct-chat-messages">
+                @foreach (var conversation in GroupMessages)
+                {
+                    bool isLoggedInUser = conversation.FromId == LoggedInUserId;
+                    <div class="@( isLoggedInUser?"direct-chat-msg":"direct-chat-msg right")">
+                        <div class="direct-chat-infos clearfix">
+                            @{
+                                string UserName = _context.Users.FirstOrDefault(x => x.Id == conversation.FromId).UserName;
+                            }
+                            <span class="direct-chat-name @(isLoggedInUser?"float-left":"float-right") ">@UserName</span>
+                            <span class="direct-chat-timestamp @(isLoggedInUser?"float-right":"float-left")">
+                                <span>@conversation.SendDate.ToString("dd-MMM-yyyy")</span>
+                                <span>@conversation.SendDate.ToString("hh:mm")</span>
+                            </span>
+                        </div>
+
+                        <img class="direct-chat-img" src="AdminLTE/dist/img/user1-128x128.jpg" alt="Message User Image">
+
+                        <div class="direct-chat-text">
+                            @conversation.Message
+                        </div>
+
+                    </div>
+                }
+                </div>
+            </div>
+
+            <div class="card-footer">
+            <EditForm method="post" Model="model" OnValidSubmit="Send" FormName="create" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger" />
+
+                <div class="input-group">                    
+                    <InputText id="message" @bind-Value="model.Message" placeholder="Type Message ..." class="form-control" />
+                    <ValidationMessage For="() => model.Message" class="text-danger" />
+                    <span class="input-group-append">
+                        <button type="submit" class="btn btn-primary">Send</button>
+                    </span>
+                    </div>               
+            </EditForm>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    @* <div>
+        <div class="alert @(conversation.FromId == LoggedInUserId ? "alert-primary": "alert-secondary")" role="alert">
+            @conversation.Message
+        </div>
+        <span>@conversation.SendDate.ToString("dd-MMM-yyyy")</span>
+        <span>@conversation.SendDate.ToString("hh:mm")</span>
+
+        @{
+            var isFound = groupMessageTracks.FirstOrDefault(x => x.GroupMessageId == conversation.GroupMessageId);
+            if (isFound is not null)
+            {
+                <span> Recieved Date @isFound.RecievedDate.ToString("dd-MMM-yyyy")</span>
+                <span>@isFound.RecievedDate.ToString("hh:mm")</span>
+            }
+        }
+
+    </div> *@
+
+@code{
+    [Parameter]
+    public string GroupId { get; set; }
+    [Parameter]
+    public string LoggedInUserId { get; set; }
+    [SupplyParameterFromForm]
+    public GroupMessage model { get; set; } = new();
+
+    public string GroupName { get; set; }
+
+    public List<GroupMessage> GroupMessages = new List<GroupMessage>();
+    List<GroupMessageTrack> groupMessageTracks = new List<GroupMessageTrack>();
+
+    protected override void OnInitialized()
+    {
+        getGroupName();
+        setGroupMessages();
+        setGroupMessageTracks();
+        UpdateReceivedDate();
+        
+        //DeleteMessageTrack();
+        base.OnInitialized();
+    }
+    void setGroupMessageTracks()
+    {
+        groupMessageTracks = _context.GroupMessageTrack
+                                           .Where(x => x.RecievedUserId == LoggedInUserId).ToList();
+
+    }
+    void DeleteMessageTrack()
+    {
+        groupMessageTracks = _context.GroupMessageTrack.Where(x => x.RecievedUserId == LoggedInUserId)
+                            .ToList();
+        _context.RemoveRange(groupMessageTracks);
+        _context.SaveChanges();
+    }
+    void getGroupName()
+    {
+        GroupName = _context.Group.First(x => x.GroupId == GroupId).GroupName;
+    }
+    void setGroupMessages()
+    {
+        GroupMessages = _context.GroupMessage.Where(x => x.GroupId == GroupId)
+                                .OrderBy(x=>x.SendDate)
+                                .ToList();
+    }
+    void UpdateReceivedDate()
+    {        
+        var messageIds = groupMessageTracks.Select(x => x.GroupMessageId).ToList();
+        var groupm = GroupMessages.Select(x => x.GroupMessageId).ToList();
+       groupm =  groupm.Except(messageIds).ToList() ;
+        List<GroupMessageTrack> groupMessageTracksUpdate = new List<GroupMessageTrack>();
+       @foreach(var item in groupm)
+        {    
+            GroupMessageTrack groupMessageTrack = new GroupMessageTrack();
+            groupMessageTrack.Id = Guid.NewGuid().ToString();
+            groupMessageTrack.RecievedUserId = LoggedInUserId;
+            groupMessageTrack.RecievedDate = DateTime.Now;
+            groupMessageTrack.GroupMessageId = item;
+            groupMessageTracksUpdate.Add(groupMessageTrack);
+        }
+        _context.GroupMessageTrack.AddRange(groupMessageTracksUpdate);
+        _context.SaveChanges();
+        
+
+    }
+    void Send()
+    {       
+        model.SendDate = DateTime.Now;
+        model.FromId = LoggedInUserId;        
+        model.GroupMessageId =  Guid.NewGuid().ToString();
+        model.GroupId = GroupId;
+        _context.GroupMessage.Add(model);
+        _context.SaveChanges();
+        UpdateReceivedDate();
+        setGroupMessageTracks();
+        setGroupMessages();
+    }
+}

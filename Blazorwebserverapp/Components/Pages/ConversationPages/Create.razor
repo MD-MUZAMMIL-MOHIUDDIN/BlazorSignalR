@@ -1,0 +1,83 @@
+﻿@page "/conversations/create"
+@inject Blazorwebserverapp.Data.ApplicationDbContext DB
+@using Blazorwebserverapp.Models
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h4>Conversation</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Conversation" OnValidSubmit="AddConversation" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="mb-3">
+                <label for="fromid" class="form-label">FromId:</label> 
+                <InputText id="fromid" @bind-Value="Conversation.FromId" class="form-control" /> 
+                <ValidationMessage For="() => Conversation.FromId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="sendtoid" class="form-label">SendToId:</label> 
+                <InputText id="sendtoid" @bind-Value="Conversation.SendToId" class="form-control" /> 
+                <ValidationMessage For="() => Conversation.SendToId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="message" class="form-label">Message:</label> 
+                <InputText id="message" @bind-Value="Conversation.Message" class="form-control" /> 
+                <ValidationMessage For="() => Conversation.Message" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="recieveddate" class="form-label">RecievedDate:</label> 
+                <InputDate id="recieveddate" @bind-Value="Conversation.RecievedDate" class="form-control" /> 
+                <ValidationMessage For="() => Conversation.RecievedDate" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="seendate" class="form-label">SeenDate:</label> 
+                <InputDate id="seendate" @bind-Value="Conversation.SeenDate" class="form-control" /> 
+                <ValidationMessage For="() => Conversation.SeenDate" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="senddate" class="form-label">SendDate:</label> 
+                <InputDate id="senddate" @bind-Value="Conversation.SendDate" class="form-control" /> 
+                <ValidationMessage For="() => Conversation.SendDate" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="isblocked" class="form-label">IsBlocked:</label> 
+                <InputCheckbox id="isblocked" @bind-Value="Conversation.IsBlocked" class="form-check-input" /> 
+                <ValidationMessage For="() => Conversation.IsBlocked" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="blockedby" class="form-label">BlockedBy:</label> 
+                <InputText id="blockedby" @bind-Value="Conversation.BlockedBy" class="form-control" /> 
+                <ValidationMessage For="() => Conversation.BlockedBy" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="isdeleted" class="form-label">IsDeleted:</label> 
+                <InputCheckbox id="isdeleted" @bind-Value="Conversation.IsDeleted" class="form-check-input" /> 
+                <ValidationMessage For="() => Conversation.IsDeleted" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/conversations">Back to List</a>
+</div>
+
+@code {
+
+    [SupplyParameterFromForm]
+    public Conversation Conversation { get; set; } = new();
+
+    // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
+    public async Task AddConversation()
+    {
+        DB.Conversation.Add(Conversation);
+        await DB.SaveChangesAsync();
+        NavigationManager.NavigateTo("/conversations");
+    }
+}

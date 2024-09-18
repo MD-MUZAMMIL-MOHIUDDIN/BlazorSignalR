@@ -1,0 +1,33 @@
+﻿@page "/movies"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject Blazorwebserverapp.Data.ApplicationDbContext DB
+@using Blazorwebserverapp
+
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="movies/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="DB.Movies" Pagination="state">
+    <PropertyColumn Property="movies => movies.Title" Sortable="true" />
+    <PropertyColumn Property="movies => movies.ReleaseDate" Title="Release Date" Format="MMM/dd/yyyy" />
+    <PropertyColumn Property="movies => movies.Genre" />
+    <PropertyColumn Property="movies => movies.Price" />
+
+    <TemplateColumn Context="movies">
+        <a href="@($"movies/edit?id={movies.Id}")">Edit</a> |
+        <a href="@($"movies/details?id={movies.Id}")">Details</a> |
+        <a href="@($"movies/delete?id={movies.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+<Paginator State="state"/>
+
+@code{
+    PaginationState state = new PaginationState { ItemsPerPage = 1 };
+
+}
